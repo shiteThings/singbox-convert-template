@@ -1,0 +1,164 @@
+{
+    "dns": {
+        "servers": [
+            {
+                "tag": "aliDns",
+                "type": "https",
+                "server": "dns.alidns.com",
+                "path": "/dns-query",
+                "domain_resolver": "local"
+            },
+            {
+                "tag": "local",
+                "type": "udp",
+                "server": "223.5.5.5"
+            },
+            {
+                "tag": "proxyDns",
+                "type": "https",
+                "server": "dns.google",
+                "path": "/dns-query",
+                "domain_resolver": "aliDns",
+                "detour": "proxy"
+            }
+        ],
+        "rules": [
+            {
+                "rule_set": "geosite-cn",
+                "server": "aliDns"
+            },
+            {
+                "clash_mode": "direct",
+                "server": "local"
+            },
+            {
+                "clash_mode": "global",
+                "server": "proxyDns"
+            }
+        ],
+        "final": "proxyDns",
+        "strategy": "prefer_ipv4",
+        "independent_cache": true,
+        "reverse_mapping": true
+    },
+    "inbounds": [
+        {
+            "type": "tun",
+            "tag": "tun-in",
+            "address": [
+                "172.19.0.1/30",
+                "fd00::1/126"
+            ],
+            "auto_route": true,
+            "strict_route": true,
+            "sniff_override_destination": true,
+            "domain_strategy": "prefer_ipv4"
+        }
+    ],
+    "route": {
+        "rules": [
+            {
+                "action": "sniff"
+            },
+            {
+                "type": "logical",
+                "mode": "or",
+                "rules": [
+                    {
+                        "port": 53
+                    },
+                    {
+                        "protocol": "dns"
+                    }
+                ],
+                "action": "hijack-dns"
+            },
+            {
+                "ip_is_private": true,
+                "outbound": "direct"
+            },
+            {
+                "rule_set": "geosite-cn",
+                "outbound": "direct"
+            },
+            {
+                "rule_set": "geoip-cn",
+                "outbound": "direct"
+            },
+            {
+                "clash_mode": "Global",
+                "outbound": "proxy"
+            },
+            {
+                "clash_mode": "Direct",
+                "outbound": "direct"
+            }
+        ],
+        "rule_set": [
+            {
+                "tag": "geosite-cn",
+                "type": "remote",
+                "format": "binary",
+                "url": "https://gh-proxy.com/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/cn.srs",
+                "download_detour": "direct"
+            },
+            {
+                "tag": "geoip-cn",
+                "type": "remote",
+                "format": "binary",
+                "url": "https://gh-proxy.com/https://github.com/qljsyph/ruleset-icon/raw/refs/heads/main/sing-box/geoip/China-ASN-combined-ip.srs",
+                "download_detour": "direct"
+            }
+        ],
+        "final": "proxy",
+        "auto_detect_interface": true,
+        "default_domain_resolver": {
+            "server": "aliDns"
+        }
+    },
+    "outbounds": [
+        {
+            "tag": "proxy",
+            "type": "selector",
+            "outbounds": [
+                "auto",
+                "direct",
+                "{all}"
+            ]
+        },
+        {
+            "tag": "auto",
+            "type": "urltest",
+            "outbounds": [
+                "{all}"
+            ],
+            "url": "http://www.gstatic.com/generate_204",
+            "interval": "10m",
+            "tolerance": 50
+        },
+        {
+            "type": "direct",
+            "tag": "direct"
+        }
+    ],
+    "experimental": {
+        "cache_file": {
+            "enabled": true,
+            "path": "./cache.db",
+            "store_fakeip": true
+        },
+        "clash_api": {
+            "external_controller": "0.0.0.0:9090",
+            "external_ui": "ui",
+            "external_ui_download_url": "https://gh-proxy.com/https://github.com/Zephyruso/zashboard/archive/refs/heads/gh-pages.zip",
+            "external_ui_download_detour": "direct",
+            "secret": "",
+            "default_mode": "rule"
+        }
+    },
+    "log": {
+        "disabled": false,
+        "level": "info",
+        "timestamp": true
+    }
+}

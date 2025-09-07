@@ -1,1 +1,1 @@
-{"version": 1, "rules": {"domain": ["ip.sb"]}}
+{"version": 1, "rules": [{"domain": ["ip.sb"]}]}

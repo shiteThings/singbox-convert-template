@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>链接生成工具</title>
+  <style>
+    body {
+      font-family: "Microsoft YaHei", sans-serif;
+      max-width: 700px;
+      margin: 50px auto;
+      padding: 20px;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+    }
+    label {
+      font-weight: bold;
+      display: block;
+      margin-top: 15px;
+    }
+    input[type="text"],
+    textarea {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+      box-sizing: border-box;
+      font-size: 14px;
+    }
+    textarea {
+      resize: vertical;
+    }
+    button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    #result {
+      margin-top: 20px;
+      background: #f5f5f5;
+      padding: 10px;
+      word-break: break-all;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+    #copyBtn {
+      display: none;
+      margin-left: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>sing-box-subscribe 链接生成工具</h2>
+
+  <label for="prefix">前缀域名（如：https://xxxxxxx.vercel.app）：</label>
+  <input type="text" id="prefix" placeholder="例如：https://mydomain.vercel.app">
+
+  <label for="subscribeURL">订阅链接地址（支持较长内容或 base64 字符串）：</label>
+  <textarea id="subscribeURL" rows="3" placeholder="例如：https://mysubscribe.domain.com 或 base64字符串"></textarea>
+
+  <label for="token">Token：</label>
+  <input type="text" id="token" placeholder="例如：abc123">
+
+  <label for="fileURL">配置文件地址（file 参数）：</label>
+  <input type="text" id="fileURL" placeholder="例如：https://github.com/xxx/xxx.json">
+
+  <button onclick="generateLink()">生成链接</button>
+  <button id="copyBtn" onclick="copyLink()">复制链接</button>
+
+  <div id="result"></div>
+
+  <script>
+    let currentLink = "";
+
+    // 判断字符串是否为有效 Base64 编码
+    function isBase64(str) {
+      try {
+        if (!/^[A-Za-z0-9+/=]+$/.test(str) || str.length % 4 !== 0) return false;
+        const decoded = atob(str);
+        const reencoded = btoa(decoded);
+        return str === reencoded;
+      } catch (e) {
+        return false;
+      }
+    }
+
+    function generateLink() {
+      const prefix = document.getElementById("prefix").value.trim();
+      const rawSubscribeURL = document.getElementById("subscribeURL").value.trim();
+      const token = document.getElementById("token").value.trim();
+      const fileURL = document.getElementById("fileURL").value.trim();
+
+      if (!prefix || !rawSubscribeURL || !token || !fileURL) {
+        alert("请填写所有字段！");
+        return;
+      }
+
+      // 处理订阅链接（Base64 保留，否则进行 URL 编码）
+      const processedSubscribeURL = isBase64(rawSubscribeURL)
+        ? rawSubscribeURL
+        : encodeURIComponent(rawSubscribeURL);
+
+      const encodedFileURL = encodeURIComponent(fileURL);
+
+      currentLink = `${prefix}/config/${processedSubscribeURL}?token=${token}&file=${encodedFileURL}`;
+
+      document.getElementById("result").innerHTML = `
+        <strong>生成的链接：</strong><br>
+        <a href="${currentLink}" target="_blank">${currentLink}</a>
+      `;
+
+      document.getElementById("copyBtn").style.display = "inline-block";
+    }
+
+    function copyLink() {
+      if (!currentLink) {
+        alert("请先生成链接！");
+        return;
+      }
+
+      navigator.clipboard.writeText(currentLink).then(() => {
+        alert("链接已复制到剪贴板！");
+      }).catch(err => {
+        alert("复制失败：" + err);
+      });
+    }
+  </script>
+
+</body>
+</html>
